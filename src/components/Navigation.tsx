@@ -90,10 +90,19 @@ interface DesktopNavProps {
   isSignedIn?: boolean;
   userName?: string;
   onSignOut?: () => void;
+  onAdminClick?: () => void;
 }
 
 // Desktop Top Navigation - MLS Premium Style
-export function DesktopNav({ activeNav, onNavChange, onSignIn, isSignedIn, userName, onSignOut }: DesktopNavProps) {
+export function DesktopNav({
+  activeNav,
+  onNavChange,
+  onSignIn,
+  isSignedIn,
+  userName,
+  onSignOut,
+  onAdminClick,
+}: DesktopNavProps) {
   const navItems: { id: NavItem; label: string; comingSoon?: boolean }[] = [
     { id: 'home', label: 'Home' },
     { id: 'matches', label: 'Schedule' },
@@ -206,7 +215,10 @@ export function DesktopNav({ activeNav, onNavChange, onSignIn, isSignedIn, userN
             </button>
             
             {/* Admin (subtle) */}
-            <button className="text-[10px] text-[#374151] hover:text-[#6B7280] transition-colors px-2">
+            <button
+              onClick={onAdminClick}
+              className="text-[10px] text-[#374151] hover:text-[#6B7280] transition-colors px-2"
+            >
               Admin
             </button>
           </div>

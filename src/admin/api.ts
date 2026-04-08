@@ -11,7 +11,7 @@ import type {
   PlayerPayload,
 } from '@/admin/types';
 
-const DEFAULT_API_BASE_URL = 'https://kpfl.onrender.com';
+const DEFAULT_API_BASE_URL = '/backend';
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL).replace(/\/+$/, '');
 const API_ENDPOINTS = {
   authLogin: '/auth/login',

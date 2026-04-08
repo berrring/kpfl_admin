@@ -11,8 +11,19 @@ import type {
   PlayerPayload,
 } from '@/admin/types';
 
-export const BASE_URL = 'https://kpfl.onrender.com';
-
+const DEFAULT_API_BASE_URL = 'https://kpfl.onrender.com';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL).replace(/\/+$/, '');
+const API_ENDPOINTS = {
+  authLogin: '/auth/login',
+  clubsList: '/api/clubs',
+  clubsAdmin: '/admin/clubs',
+  playersList: '/api/players',
+  playersAdmin: '/admin/players',
+  matchesList: '/api/matches',
+  matchesAdmin: '/admin/matches',
+  newsList: '/api/news',
+  newsAdmin: '/admin/news',
+} as const;
 const TOKEN_KEY = 'kpfl_admin_token';
 
 type JsonRecord = Record<string, unknown>;
@@ -252,6 +263,15 @@ async function parseResponse(response: Response): Promise<unknown> {
   }
 }
 
+function buildApiUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE_URL}${normalizedPath}`;
+}
+
 async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body } = options;
   const requiresAuth = options.auth ?? path.startsWith('/admin/');
@@ -272,7 +292,7 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
+  const response = await fetch(buildApiUrl(path), {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -286,23 +306,11 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
   return payload as T;
 }
 
-async function requestList<T>(paths: string[], normalize: (value: unknown) => T): Promise<T[]> {
-  let lastError: Error | null = null;
-
-  for (const path of paths) {
-    try {
-      const payload = await apiRequest<unknown>(path, { method: 'GET' });
-      const list = listFromPayload(payload);
-      if (list.length > 0 || Array.isArray(payload)) {
-        return list.map(normalize);
-      }
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error('Failed to load data');
-    }
-  }
-
-  if (lastError) {
-    throw lastError;
+async function requestList<T>(path: string, normalize: (value: unknown) => T): Promise<T[]> {
+  const payload = await apiRequest<unknown>(path, { method: 'GET' });
+  const list = listFromPayload(payload);
+  if (list.length > 0 || Array.isArray(payload)) {
+    return list.map(normalize);
   }
 
   return [];
@@ -321,7 +329,7 @@ export function clearToken(): void {
 }
 
 export async function loginAdmin(email: string, password: string): Promise<void> {
-  const payload = await apiRequest<unknown>('/auth/login', {
+  const payload = await apiRequest<unknown>(API_ENDPOINTS.authLogin, {
     method: 'POST',
     auth: false,
     body: { email, password },
@@ -340,19 +348,19 @@ export async function loginAdmin(email: string, password: string): Promise<void>
 }
 
 export async function fetchClubs(): Promise<ClubItem[]> {
-  return requestList(['/admin/clubs', '/api/clubs'], normalizeClub);
+  return requestList(API_ENDPOINTS.clubsList, normalizeClub);
 }
 
 export async function fetchPlayers(): Promise<PlayerItem[]> {
-  return requestList(['/admin/players', '/api/players'], normalizePlayer);
+  return requestList(API_ENDPOINTS.playersList, normalizePlayer);
 }
 
 export async function fetchMatches(): Promise<MatchItem[]> {
-  return requestList(['/admin/matches', '/api/matches'], normalizeMatch);
+  return requestList(API_ENDPOINTS.matchesList, normalizeMatch);
 }
 
 export async function fetchNews(limit: number = 50): Promise<NewsItem[]> {
-  return requestList([`/admin/news?limit=${limit}`, '/admin/news', `/api/news?limit=${limit}`], normalizeNews);
+  return requestList(`${API_ENDPOINTS.newsList}?limit=${limit}`, normalizeNews);
 }
 
 export async function createClub(payload: ClubPayload): Promise<void> {
@@ -368,7 +376,7 @@ export async function createClub(payload: ClubPayload): Promise<void> {
     coachInfo: payload.coachInfo || undefined,
   });
 
-  await apiRequest('/admin/clubs', {
+  await apiRequest(API_ENDPOINTS.clubsAdmin, {
     method: 'POST',
     body: requestBody,
   });
@@ -387,7 +395,7 @@ export async function updateClub(id: Identifier, payload: ClubPayload): Promise<
     coachInfo: payload.coachInfo || undefined,
   });
 
-  await apiRequest(`/admin/clubs/${id}`, {
+  await apiRequest(`${API_ENDPOINTS.clubsAdmin}/${id}`, {
     method: 'PUT',
     body: requestBody,
   });
@@ -411,7 +419,7 @@ export async function createPlayer(payload: PlayerPayload): Promise<void> {
     sourceNote: payload.sourceNote || undefined,
   });
 
-  await apiRequest('/admin/players', {
+  await apiRequest(API_ENDPOINTS.playersAdmin, {
     method: 'POST',
     body: requestBody,
   });
@@ -435,7 +443,7 @@ export async function updatePlayer(id: Identifier, payload: PlayerPayload): Prom
     sourceNote: payload.sourceNote || undefined,
   });
 
-  await apiRequest(`/admin/players/${id}`, {
+  await apiRequest(`${API_ENDPOINTS.playersAdmin}/${id}`, {
     method: 'PUT',
     body: requestBody,
   });
@@ -454,7 +462,7 @@ export async function createMatch(payload: MatchPayload): Promise<void> {
     status: payload.status,
   });
 
-  await apiRequest('/admin/matches', {
+  await apiRequest(API_ENDPOINTS.matchesAdmin, {
     method: 'POST',
     body: requestBody,
   });
@@ -473,14 +481,14 @@ export async function updateMatch(id: Identifier, payload: MatchPayload): Promis
     status: payload.status,
   });
 
-  await apiRequest(`/admin/matches/${id}`, {
+  await apiRequest(`${API_ENDPOINTS.matchesAdmin}/${id}`, {
     method: 'PUT',
     body: requestBody,
   });
 }
 
 export async function setMatchResult(id: Identifier, payload: MatchResultPayload): Promise<void> {
-  await apiRequest(`/admin/matches/${id}/result`, {
+  await apiRequest(`${API_ENDPOINTS.matchesAdmin}/${id}/result`, {
     method: 'POST',
     body: payload,
   });
@@ -496,7 +504,7 @@ export async function createNews(payload: NewsPayload): Promise<void> {
     playerId: asPayloadId(payload.playerId),
   });
 
-  await apiRequest('/admin/news', {
+  await apiRequest(API_ENDPOINTS.newsAdmin, {
     method: 'POST',
     body: requestBody,
   });
@@ -512,7 +520,7 @@ export async function updateNews(id: Identifier, payload: NewsPayload): Promise<
     playerId: asPayloadId(payload.playerId),
   });
 
-  await apiRequest(`/admin/news/${id}`, {
+  await apiRequest(`${API_ENDPOINTS.newsAdmin}/${id}`, {
     method: 'PUT',
     body: requestBody,
   });

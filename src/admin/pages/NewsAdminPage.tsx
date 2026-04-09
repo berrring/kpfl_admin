@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { createNews, fetchClubs, fetchNews, updateNews } from '@/admin/api';
-import type { ClubItem, NewsItem, NewsPayload } from '@/admin/types';
+import { createNews, fetchClubs, fetchNews, fetchPlayersBasic, updateNews } from '@/admin/api';
+import type { ClubItem, NewsItem, NewsPayload, PlayerItem } from '@/admin/types';
 
 interface NewsFormState {
   title: string;
@@ -8,6 +8,7 @@ interface NewsFormState {
   publishedAt: string;
   tag: string;
   clubId: string;
+  playerId: string;
 }
 
 const EMPTY_FORM: NewsFormState = {
@@ -16,6 +17,7 @@ const EMPTY_FORM: NewsFormState = {
   publishedAt: '',
   tag: '',
   clubId: '',
+  playerId: '',
 };
 
 const TAGS = [
@@ -28,6 +30,7 @@ const TAGS = [
 
 export function NewsAdminPage() {
   const [clubs, setClubs] = useState<ClubItem[]>([]);
+  const [players, setPlayers] = useState<PlayerItem[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,13 +48,26 @@ export function NewsAdminPage() {
     return map;
   }, [clubs]);
 
+  const playerMap = useMemo(() => {
+    const map = new Map<string, string>();
+    players.forEach(player => {
+      map.set(player.id, [player.firstName, player.lastName].filter(Boolean).join(' ') || player.id);
+    });
+    return map;
+  }, [players]);
+
   const loadData = async () => {
     setError('');
     setLoading(true);
     try {
-      const [clubsData, newsData] = await Promise.all([fetchClubs(), fetchNews(50)]);
+      const [clubsData, newsData, playersData] = await Promise.all([
+        fetchClubs(),
+        fetchNews(50),
+        fetchPlayersBasic(),
+      ]);
       setClubs(clubsData);
       setNews(newsData);
+      setPlayers(playersData);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Failed to load news');
     } finally {
@@ -76,6 +92,7 @@ export function NewsAdminPage() {
       publishedAt: item.date ? item.date.slice(0, 16) : '',
       tag: item.tag || '',
       clubId: item.clubId || '',
+      playerId: item.playerId || '',
     });
   };
 
@@ -91,6 +108,7 @@ export function NewsAdminPage() {
       publishedAt,
       tag: form.tag,
       clubId: form.clubId || undefined,
+      playerId: form.playerId || undefined,
     };
 
     try {
@@ -131,13 +149,14 @@ export function NewsAdminPage() {
           <p className="text-sm text-[#6B7280]">Loading news...</p>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-[#E5E7EB]">
-            <table className="data-table min-w-[860px]">
+            <table className="data-table min-w-[960px]">
               <thead>
                 <tr>
                   <th>Title</th>
                   <th>Tag</th>
                   <th>Date</th>
                   <th>Club</th>
+                  <th>Player</th>
                   <th>Summary</th>
                   <th className="text-right">Action</th>
                 </tr>
@@ -145,7 +164,7 @@ export function NewsAdminPage() {
               <tbody>
                 {news.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="text-center text-[#6B7280]">
+                    <td colSpan={7} className="text-center text-[#6B7280]">
                       No news found
                     </td>
                   </tr>
@@ -156,6 +175,7 @@ export function NewsAdminPage() {
                     <td>{item.tag || '-'}</td>
                     <td>{item.date ? item.date.slice(0, 16).replace('T', ' ') : '-'}</td>
                     <td>{item.clubName || (item.clubId ? clubMap.get(item.clubId) || item.clubId : '-')}</td>
+                    <td>{item.playerName || (item.playerId ? playerMap.get(item.playerId) || item.playerId : '-')}</td>
                     <td className="max-w-[240px] truncate">{item.summary || '-'}</td>
                     <td className="text-right">
                       <button
@@ -235,6 +255,22 @@ export function NewsAdminPage() {
               {clubs.map((club, index) => (
                 <option key={club.id || `news-club-${index}`} value={club.id}>
                   {club.name || club.shortName || club.id}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-1.5 text-xs font-semibold text-[#4B5563]">Player (optional)</label>
+            <select
+              className="input-field"
+              value={form.playerId}
+              onChange={event => setForm(prev => ({ ...prev, playerId: event.target.value }))}
+            >
+              <option value="">Not linked to player</option>
+              {players.map((player, index) => (
+                <option key={player.id || `news-player-${index}`} value={player.id}>
+                  {[player.firstName, player.lastName].filter(Boolean).join(' ') || player.id}
                 </option>
               ))}
             </select>

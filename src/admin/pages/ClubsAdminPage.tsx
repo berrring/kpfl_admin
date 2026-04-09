@@ -8,6 +8,10 @@ interface ClubFormState {
   city: string;
   stadium: string;
   founded: string;
+  primaryColor: string;
+  logoUrl: string;
+  coachName: string;
+  coachInfo: string;
 }
 
 const EMPTY_FORM: ClubFormState = {
@@ -16,6 +20,10 @@ const EMPTY_FORM: ClubFormState = {
   city: '',
   stadium: '',
   founded: '',
+  primaryColor: '',
+  logoUrl: '',
+  coachName: '',
+  coachInfo: '',
 };
 
 export function ClubsAdminPage() {
@@ -52,13 +60,17 @@ export function ClubsAdminPage() {
 
   const handleEdit = (club: ClubItem) => {
     setEditingClubId(club.id);
-    setForm({
-      name: club.name ?? '',
-      shortName: club.shortName ?? '',
-      city: club.city ?? '',
-      stadium: club.stadium ?? '',
-      founded: club.founded ? String(club.founded) : '',
-    });
+      setForm({
+        name: club.name ?? '',
+        shortName: club.shortName ?? '',
+        city: club.city ?? '',
+        stadium: club.stadium ?? '',
+        founded: club.founded ? String(club.founded) : '',
+        primaryColor: club.primaryColor ?? '',
+        logoUrl: club.logoUrl ?? '',
+        coachName: club.coachName ?? '',
+        coachInfo: club.coachInfo ?? '',
+      });
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -72,6 +84,10 @@ export function ClubsAdminPage() {
       city: form.city.trim(),
       stadium: form.stadium.trim(),
       founded: form.founded ? Number(form.founded) : null,
+      primaryColor: form.primaryColor.trim() || undefined,
+      logoUrl: form.logoUrl.trim() || undefined,
+      coachName: form.coachName.trim() || undefined,
+      coachInfo: form.coachInfo.trim() || undefined,
     };
 
     try {
@@ -113,7 +129,7 @@ export function ClubsAdminPage() {
           <p className="text-sm text-[#6B7280]">Loading clubs...</p>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-[#E5E7EB]">
-            <table className="data-table min-w-[680px]">
+            <table className="data-table min-w-[840px]">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -121,13 +137,14 @@ export function ClubsAdminPage() {
                   <th>City</th>
                   <th>Stadium</th>
                   <th>Founded</th>
+                  <th>Coach</th>
                   <th className="text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {clubs.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="text-center text-[#6B7280]">
+                    <td colSpan={7} className="text-center text-[#6B7280]">
                       No clubs found
                     </td>
                   </tr>
@@ -139,6 +156,7 @@ export function ClubsAdminPage() {
                     <td>{club.city || '-'}</td>
                     <td>{club.stadium || '-'}</td>
                     <td>{club.founded ?? '-'}</td>
+                    <td>{club.coachName || '-'}</td>
                     <td className="text-right">
                       <button
                         onClick={() => handleEdit(club)}
@@ -207,6 +225,44 @@ export function ClubsAdminPage() {
               max={2100}
               value={form.founded}
               onChange={event => setForm(prev => ({ ...prev, founded: event.target.value }))}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label className="block mb-1.5 text-xs font-semibold text-[#4B5563]">Primary Color</label>
+              <input
+                className="input-field"
+                placeholder="#0A1628"
+                value={form.primaryColor}
+                onChange={event => setForm(prev => ({ ...prev, primaryColor: event.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block mb-1.5 text-xs font-semibold text-[#4B5563]">Logo URL</label>
+              <input
+                className="input-field"
+                value={form.logoUrl}
+                onChange={event => setForm(prev => ({ ...prev, logoUrl: event.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block mb-1.5 text-xs font-semibold text-[#4B5563]">Coach Name</label>
+            <input
+              className="input-field"
+              value={form.coachName}
+              onChange={event => setForm(prev => ({ ...prev, coachName: event.target.value }))}
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1.5 text-xs font-semibold text-[#4B5563]">Coach Info</label>
+            <textarea
+              className="input-field min-h-[86px] resize-y"
+              value={form.coachInfo}
+              onChange={event => setForm(prev => ({ ...prev, coachInfo: event.target.value }))}
             />
           </div>
 

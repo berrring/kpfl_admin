@@ -7,18 +7,22 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const backendProxy = {
+  '/backend': {
+    target: 'https://kpfl.onrender.com',
+    changeOrigin: true,
+    rewrite: (requestPath: string) => requestPath.replace(/^\/backend/, ''),
+  },
+};
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), viteSingleFile()],
   server: {
-    proxy: {
-      '/backend': {
-        target: 'https://kpfl.onrender.com',
-        changeOrigin: true,
-        rewrite: requestPath => requestPath.replace(/^\/backend/, ''),
-      },
-    },
+    proxy: backendProxy,
+  },
+  preview: {
+    proxy: backendProxy,
   },
   resolve: {
     alias: {

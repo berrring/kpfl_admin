@@ -46,7 +46,7 @@ export function AdminLoginPage({ onSuccess }: AdminLoginPageProps) {
               value={email}
               onChange={event => setEmail(event.target.value)}
               className="input-field"
-              placeholder="admin@kpfl.kg"
+              placeholder="admin@kpfl.local"
             />
           </div>
 

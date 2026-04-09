@@ -25,6 +25,11 @@ Why this matters:
 - The project now calls `/backend/*` on the same origin.
 - Vercel rewrites `/backend/*` to `https://kpfl.onrender.com/*`, so browser CORS does not block admin requests.
 
+## Local run
+- `npm run dev` proxies `/backend/*` to Render.
+- `npm run preview` now does the same, so local production preview can also reach the backend.
+- If you open `dist/index.html` directly or serve `dist` from a plain static server without a `/backend` rewrite, API calls will fail.
+
 ## 5) Deploy
 - Click `Deploy`.
 - After deploy, open:

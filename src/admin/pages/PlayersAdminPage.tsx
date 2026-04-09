@@ -10,6 +10,13 @@ interface PlayerFormState {
   position: string;
   nationality: string;
   birthDate: string;
+  heightCm: string;
+  weightKg: string;
+  ageYears: string;
+  marketValueEur: string;
+  photoUrl: string;
+  sourceUrl: string;
+  sourceNote: string;
 }
 
 const EMPTY_FORM: PlayerFormState = {
@@ -20,6 +27,13 @@ const EMPTY_FORM: PlayerFormState = {
   position: '',
   nationality: '',
   birthDate: '',
+  heightCm: '',
+  weightKg: '',
+  ageYears: '',
+  marketValueEur: '',
+  photoUrl: '',
+  sourceUrl: '',
+  sourceNote: '',
 };
 
 export function PlayersAdminPage() {
@@ -82,6 +96,14 @@ export function PlayersAdminPage() {
       position: player.position || '',
       nationality: player.nationality || '',
       birthDate: player.birthDate || '',
+      heightCm: player.heightCm !== null && player.heightCm !== undefined ? String(player.heightCm) : '',
+      weightKg: player.weightKg !== null && player.weightKg !== undefined ? String(player.weightKg) : '',
+      ageYears: player.ageYears !== null && player.ageYears !== undefined ? String(player.ageYears) : '',
+      marketValueEur:
+        player.marketValueEur !== null && player.marketValueEur !== undefined ? String(player.marketValueEur) : '',
+      photoUrl: player.photoUrl || '',
+      sourceUrl: player.sourceUrl || '',
+      sourceNote: player.sourceNote || '',
     });
   };
 
@@ -98,6 +120,13 @@ export function PlayersAdminPage() {
       number: form.number ? Number(form.number) : null,
       nationality: form.nationality.trim() || undefined,
       birthDate: form.birthDate || undefined,
+      heightCm: form.heightCm ? Number(form.heightCm) : undefined,
+      weightKg: form.weightKg ? Number(form.weightKg) : undefined,
+      ageYears: form.ageYears ? Number(form.ageYears) : undefined,
+      marketValueEur: form.marketValueEur ? Number(form.marketValueEur) : undefined,
+      photoUrl: form.photoUrl.trim() || undefined,
+      sourceUrl: form.sourceUrl.trim() || undefined,
+      sourceNote: form.sourceNote.trim() || undefined,
     };
 
     try {
@@ -153,7 +182,7 @@ export function PlayersAdminPage() {
           <p className="text-sm text-[#6B7280]">Loading players...</p>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-[#E5E7EB]">
-            <table className="data-table min-w-[860px]">
+            <table className="data-table min-w-[1040px]">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -162,13 +191,15 @@ export function PlayersAdminPage() {
                   <th>Position</th>
                   <th>Nationality</th>
                   <th>Birth Date</th>
+                  <th>Age</th>
+                  <th>Value</th>
                   <th className="text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredPlayers.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="text-center text-[#6B7280]">
+                    <td colSpan={9} className="text-center text-[#6B7280]">
                       No players found
                     </td>
                   </tr>
@@ -183,6 +214,8 @@ export function PlayersAdminPage() {
                     <td>{player.position || '-'}</td>
                     <td>{player.nationality || '-'}</td>
                     <td>{player.birthDate || '-'}</td>
+                    <td>{player.ageYears ?? '-'}</td>
+                    <td>{player.marketValueEur !== null && player.marketValueEur !== undefined ? `EUR ${player.marketValueEur}` : '-'}</td>
                     <td className="text-right">
                       <button
                         onClick={() => handleEdit(player)}
@@ -293,6 +326,79 @@ export function PlayersAdminPage() {
               className="input-field"
               value={form.birthDate}
               onChange={event => setForm(prev => ({ ...prev, birthDate: event.target.value }))}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block mb-1.5 text-xs font-semibold text-[#4B5563]">Height (cm)</label>
+              <input
+                type="number"
+                min={0}
+                className="input-field"
+                value={form.heightCm}
+                onChange={event => setForm(prev => ({ ...prev, heightCm: event.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block mb-1.5 text-xs font-semibold text-[#4B5563]">Weight (kg)</label>
+              <input
+                type="number"
+                min={0}
+                className="input-field"
+                value={form.weightKg}
+                onChange={event => setForm(prev => ({ ...prev, weightKg: event.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block mb-1.5 text-xs font-semibold text-[#4B5563]">Age</label>
+              <input
+                type="number"
+                min={0}
+                className="input-field"
+                value={form.ageYears}
+                onChange={event => setForm(prev => ({ ...prev, ageYears: event.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block mb-1.5 text-xs font-semibold text-[#4B5563]">Market Value (EUR)</label>
+              <input
+                type="number"
+                min={0}
+                className="input-field"
+                value={form.marketValueEur}
+                onChange={event => setForm(prev => ({ ...prev, marketValueEur: event.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block mb-1.5 text-xs font-semibold text-[#4B5563]">Photo URL</label>
+            <input
+              className="input-field"
+              value={form.photoUrl}
+              onChange={event => setForm(prev => ({ ...prev, photoUrl: event.target.value }))}
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1.5 text-xs font-semibold text-[#4B5563]">Source URL</label>
+            <input
+              className="input-field"
+              value={form.sourceUrl}
+              onChange={event => setForm(prev => ({ ...prev, sourceUrl: event.target.value }))}
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1.5 text-xs font-semibold text-[#4B5563]">Source Note</label>
+            <textarea
+              className="input-field min-h-[86px] resize-y"
+              value={form.sourceNote}
+              onChange={event => setForm(prev => ({ ...prev, sourceNote: event.target.value }))}
             />
           </div>
 

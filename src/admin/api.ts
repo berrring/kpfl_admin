@@ -16,15 +16,20 @@ const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_API_B
 const API_ENDPOINTS = {
   authLogin: '/auth/login',
   clubsList: '/api/clubs',
+  clubDetail: (id: Identifier) => `/api/clubs/${id}`,
   clubsAdmin: '/admin/clubs',
   playersList: '/api/players',
+  playerDetail: (id: Identifier) => `/api/players/${id}`,
   playersAdmin: '/admin/players',
   matchesList: '/api/matches',
+  matchDetail: (id: Identifier) => `/api/matches/${id}`,
   matchesAdmin: '/admin/matches',
   newsList: '/api/news',
+  newsDetail: (id: Identifier) => `/api/news/${id}`,
   newsAdmin: '/admin/news',
 } as const;
 const TOKEN_KEY = 'kpfl_admin_token';
+const DETAIL_REQUEST_CONCURRENCY = 12;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -292,11 +297,22 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(buildApiUrl(path), {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  const requestUrl = buildApiUrl(path);
+  let response: Response;
+
+  try {
+    response = await fetch(requestUrl, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    const usesDefaultProxy = API_BASE_URL === DEFAULT_API_BASE_URL;
+    const hint = usesDefaultProxy
+      ? 'API proxy /backend is unavailable. Start the app with `npm run dev` or `npm run preview`, or deploy it behind a server rewrite for /backend.'
+      : `Cannot reach API base URL ${API_BASE_URL}.`;
+    throw new Error(`Network error while contacting ${requestUrl}. ${hint}`);
+  }
 
   const payload = await parseResponse(response);
   if (!response.ok) {
@@ -314,6 +330,55 @@ async function requestList<T>(path: string, normalize: (value: unknown) => T): P
   }
 
   return [];
+}
+
+async function mapWithConcurrency<T, U>(
+  items: T[],
+  concurrency: number,
+  mapper: (value: T, index: number) => Promise<U>,
+): Promise<U[]> {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const results = new Array<U>(items.length);
+  let nextIndex = 0;
+
+  const worker = async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      results[currentIndex] = await mapper(items[currentIndex], currentIndex);
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, () => worker()),
+  );
+
+  return results;
+}
+
+async function requestDetailedList<T extends { id: Identifier }>(
+  listPath: string,
+  normalizeListItem: (value: unknown) => T,
+  detailPathForId: (id: Identifier) => string,
+  normalizeDetailItem: (value: unknown) => T,
+): Promise<T[]> {
+  const list = await requestList(listPath, normalizeListItem);
+
+  return mapWithConcurrency(list, DETAIL_REQUEST_CONCURRENCY, async item => {
+    if (!item.id) {
+      return item;
+    }
+
+    try {
+      const detailPayload = await apiRequest<unknown>(detailPathForId(item.id), { method: 'GET' });
+      return normalizeDetailItem(detailPayload);
+    } catch {
+      return item;
+    }
+  });
 }
 
 export function getToken(): string | null {
@@ -348,19 +413,43 @@ export async function loginAdmin(email: string, password: string): Promise<void>
 }
 
 export async function fetchClubs(): Promise<ClubItem[]> {
-  return requestList(API_ENDPOINTS.clubsList, normalizeClub);
+  return requestDetailedList(
+    API_ENDPOINTS.clubsList,
+    normalizeClub,
+    API_ENDPOINTS.clubDetail,
+    normalizeClub,
+  );
 }
 
 export async function fetchPlayers(): Promise<PlayerItem[]> {
-  return requestList(API_ENDPOINTS.playersList, normalizePlayer);
+  return requestDetailedList(
+    API_ENDPOINTS.playersList,
+    normalizePlayer,
+    API_ENDPOINTS.playerDetail,
+    normalizePlayer,
+  );
 }
 
 export async function fetchMatches(): Promise<MatchItem[]> {
-  return requestList(API_ENDPOINTS.matchesList, normalizeMatch);
+  return requestDetailedList(
+    API_ENDPOINTS.matchesList,
+    normalizeMatch,
+    API_ENDPOINTS.matchDetail,
+    normalizeMatch,
+  );
+}
+
+export async function fetchPlayersBasic(): Promise<PlayerItem[]> {
+  return requestList(API_ENDPOINTS.playersList, normalizePlayer);
 }
 
 export async function fetchNews(limit: number = 50): Promise<NewsItem[]> {
-  return requestList(`${API_ENDPOINTS.newsList}?limit=${limit}`, normalizeNews);
+  return requestDetailedList(
+    `${API_ENDPOINTS.newsList}?limit=${limit}`,
+    normalizeNews,
+    API_ENDPOINTS.newsDetail,
+    normalizeNews,
+  );
 }
 
 export async function createClub(payload: ClubPayload): Promise<void> {

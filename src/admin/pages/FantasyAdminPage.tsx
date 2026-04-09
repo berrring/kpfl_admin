@@ -49,6 +49,8 @@ interface RoundRecalculationFormState {
   roundNumber: string;
 }
 
+type FantasyView = 'overview' | 'stats' | 'pricing' | 'rounds';
+
 const EMPTY_STAT_FORM: StatFormState = {
   matchId: '',
   playerId: '',
@@ -137,6 +139,7 @@ export function FantasyAdminPage() {
   const [runningRecalculation, setRunningRecalculation] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [activeView, setActiveView] = useState<FantasyView>('overview');
   const [selectedMatchId, setSelectedMatchId] = useState('');
   const [editingStatId, setEditingStatId] = useState<string | null>(null);
   const [pricePlayerId, setPricePlayerId] = useState('');
@@ -445,7 +448,41 @@ export function FantasyAdminPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
+      <section className="card p-3 md:p-4">
+        <div className="tab-nav overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setActiveView('overview')}
+            className={`tab-item ${activeView === 'overview' ? 'active' : ''}`}
+          >
+            Overview
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('stats')}
+            className={`tab-item ${activeView === 'stats' ? 'active' : ''}`}
+          >
+            Match Stats
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('pricing')}
+            className={`tab-item ${activeView === 'pricing' ? 'active' : ''}`}
+          >
+            Pricing
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('rounds')}
+            className={`tab-item ${activeView === 'rounds' ? 'active' : ''}`}
+          >
+            Recalculation
+          </button>
+        </div>
+      </section>
+
+      {activeView === 'overview' && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
         <section className="card p-4 md:p-5">
           <h2 className="text-lg font-black mb-4">Fantasy Leagues</h2>
           <div className="overflow-x-auto rounded-lg border border-[#E5E7EB]">
@@ -521,8 +558,10 @@ export function FantasyAdminPage() {
             </table>
           </div>
         </section>
-      </div>
+        </div>
+      )}
 
+      {activeView === 'stats' && (
       <section className="card p-4 md:p-5">
         <div className="flex flex-wrap gap-3 items-center justify-between mb-4">
           <div>
@@ -746,8 +785,9 @@ export function FantasyAdminPage() {
           </form>
         </div>
       </section>
+      )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
+      {activeView === 'pricing' && (
         <section className="card p-4 md:p-5">
           <h2 className="text-lg font-black mb-4">Fantasy Pricing</h2>
           <div className="space-y-3.5">
@@ -821,8 +861,10 @@ export function FantasyAdminPage() {
             </div>
           </div>
         </section>
+      )}
 
-        <section className="card p-4 md:p-5">
+      {activeView === 'rounds' && (
+        <section className="card max-w-3xl p-4 md:p-5">
           <h2 className="text-lg font-black mb-4">Round Recalculation</h2>
           <form onSubmit={handleRoundRecalculation} className="space-y-3.5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -872,7 +914,7 @@ export function FantasyAdminPage() {
             </button>
           </form>
         </section>
-      </div>
+      )}
     </div>
   );
 }

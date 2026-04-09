@@ -11,31 +11,12 @@ import { NewsAdminPage } from '@/admin/pages/NewsAdminPage';
 import { PlayersAdminPage } from '@/admin/pages/PlayersAdminPage';
 import { navigateTo, usePathname } from '@/admin/router';
 
-type AdminPath =
-  | '/admin'
-  | '/admin/login'
-  | '/admin/clubs'
-  | '/admin/players'
-  | '/admin/matches'
-  | '/admin/news'
-  | '/admin/fantasy';
-
 type ProtectedAdminPath = '/admin/clubs' | '/admin/players' | '/admin/matches' | '/admin/news' | '/admin/fantasy';
 type ResolvedAdminRoute =
   | { kind: 'root' }
   | { kind: 'login' }
   | { kind: 'page'; path: ProtectedAdminPath }
   | { kind: 'club-detail'; clubId: string };
-
-const ROUTES: AdminPath[] = [
-  '/admin',
-  '/admin/login',
-  '/admin/clubs',
-  '/admin/players',
-  '/admin/matches',
-  '/admin/news',
-  '/admin/fantasy',
-];
 
 function normalizePath(pathname: string): string {
   if (pathname.length > 1 && pathname.endsWith('/')) {

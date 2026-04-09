@@ -4,6 +4,7 @@ import { AdminGuard } from '@/admin/components/AdminGuard';
 import { AdminLayout } from '@/admin/components/AdminLayout';
 import { ClubsAdminPage } from '@/admin/pages/ClubsAdminPage';
 import { AdminLoginPage } from '@/admin/pages/AdminLoginPage';
+import { ClubDetailAdminPage } from '@/admin/pages/ClubDetailAdminPage';
 import { FantasyAdminPage } from '@/admin/pages/FantasyAdminPage';
 import { MatchesAdminPage } from '@/admin/pages/MatchesAdminPage';
 import { NewsAdminPage } from '@/admin/pages/NewsAdminPage';
@@ -20,6 +21,11 @@ type AdminPath =
   | '/admin/fantasy';
 
 type ProtectedAdminPath = '/admin/clubs' | '/admin/players' | '/admin/matches' | '/admin/news' | '/admin/fantasy';
+type ResolvedAdminRoute =
+  | { kind: 'root' }
+  | { kind: 'login' }
+  | { kind: 'page'; path: ProtectedAdminPath }
+  | { kind: 'club-detail'; clubId: string };
 
 const ROUTES: AdminPath[] = [
   '/admin',
@@ -38,22 +44,58 @@ function normalizePath(pathname: string): string {
   return pathname;
 }
 
-function isKnownAdminPath(pathname: string): pathname is AdminPath {
-  return ROUTES.includes(pathname as AdminPath);
-}
+function resolveAdminRoute(pathname: string): ResolvedAdminRoute | null {
+  if (pathname === '/admin') {
+    return { kind: 'root' };
+  }
 
-function isProtectedAdminPath(pathname: string): pathname is ProtectedAdminPath {
-  return (
+  if (pathname === '/admin/login') {
+    return { kind: 'login' };
+  }
+
+  if (
     pathname === '/admin/clubs' ||
     pathname === '/admin/players' ||
     pathname === '/admin/matches' ||
     pathname === '/admin/news' ||
     pathname === '/admin/fantasy'
-  );
+  ) {
+    return { kind: 'page', path: pathname };
+  }
+
+  const clubDetailMatch = pathname.match(/^\/admin\/clubs\/([^/]+)$/);
+  if (clubDetailMatch) {
+    return {
+      kind: 'club-detail',
+      clubId: decodeURIComponent(clubDetailMatch[1]),
+    };
+  }
+
+  return null;
 }
 
-function renderProtectedPage(path: ProtectedAdminPath) {
-  switch (path) {
+function getActiveProtectedPath(route: ResolvedAdminRoute): ProtectedAdminPath | null {
+  if (route.kind === 'page') {
+    return route.path;
+  }
+
+  if (route.kind === 'club-detail') {
+    return '/admin/clubs';
+  }
+
+  return null;
+}
+
+function renderProtectedPage(route: ResolvedAdminRoute) {
+  if (route.kind === 'club-detail') {
+    return <ClubDetailAdminPage clubId={route.clubId} />;
+  }
+
+  if (route.kind !== 'page') {
+    return null;
+  }
+
+  switch (route.path) {
     case '/admin/clubs':
       return <ClubsAdminPage />;
     case '/admin/players':
@@ -73,41 +115,45 @@ export function AdminApp() {
   const pathname = usePathname();
   const normalizedPath = normalizePath(pathname);
   const token = getToken();
+  const route = resolveAdminRoute(normalizedPath);
+  const activeProtectedPath = route ? getActiveProtectedPath(route) : null;
 
   useEffect(() => {
-    if (!isKnownAdminPath(normalizedPath) || normalizedPath === '/admin') {
+    if (!route || route.kind === 'root') {
       navigateTo(token ? '/admin/clubs' : '/admin/login', 'replace');
       return;
     }
 
-    if (normalizedPath === '/admin/login' && token) {
+    if (route.kind === 'login' && token) {
       navigateTo('/admin/clubs', 'replace');
     }
-  }, [normalizedPath, token]);
+  }, [route, token]);
 
-  if (!isKnownAdminPath(normalizedPath) || normalizedPath === '/admin') {
+  if (!route || route.kind === 'root') {
     return null;
   }
 
-  if (normalizedPath === '/admin/login') {
+  if (route.kind === 'login') {
     return <AdminLoginPage onSuccess={() => navigateTo('/admin/clubs', 'replace')} />;
   }
 
-  if (!isProtectedAdminPath(normalizedPath)) {
+  if (!activeProtectedPath) {
     return null;
   }
 
   return (
     <AdminGuard onUnauthorized={() => navigateTo('/admin/login', 'replace')}>
       <AdminLayout
-        activePath={normalizedPath}
+        activePath={activeProtectedPath}
+        sectionTitle={route.kind === 'club-detail' ? 'Club Details' : undefined}
+        sectionSubtitle={route.kind === 'club-detail' ? 'Club profile and editing' : undefined}
         onNavigate={path => navigateTo(path)}
         onLogout={() => {
           clearToken();
           navigateTo('/admin/login', 'replace');
         }}
       >
-        {renderProtectedPage(normalizedPath)}
+        {renderProtectedPage(route)}
       </AdminLayout>
     </AdminGuard>
   );

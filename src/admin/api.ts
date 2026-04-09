@@ -531,6 +531,11 @@ export async function fetchClubs(): Promise<ClubItem[]> {
   );
 }
 
+export async function fetchClub(id: Identifier): Promise<ClubItem> {
+  const payload = await apiRequest<unknown>(API_ENDPOINTS.clubDetail(id), { method: 'GET' });
+  return normalizeClub(payload);
+}
+
 export async function fetchPlayers(): Promise<PlayerItem[]> {
   return requestDetailedList(
     API_ENDPOINTS.playersList,

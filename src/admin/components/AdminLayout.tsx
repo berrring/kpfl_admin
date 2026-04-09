@@ -19,13 +19,25 @@ interface AdminLayoutProps {
   children: ReactNode;
   onNavigate: (path: AdminNavItem['path']) => void;
   onLogout: () => void;
+  sectionTitle?: string;
+  sectionSubtitle?: string;
 }
 
 function getSectionTitle(path: string): string {
   return NAV_ITEMS.find(item => item.path === path)?.label ?? 'Admin';
 }
 
-export function AdminLayout({ activePath, children, onNavigate, onLogout }: AdminLayoutProps) {
+export function AdminLayout({
+  activePath,
+  children,
+  onNavigate,
+  onLogout,
+  sectionTitle,
+  sectionSubtitle,
+}: AdminLayoutProps) {
+  const currentTitle = sectionTitle ?? getSectionTitle(activePath);
+  const currentSubtitle = sectionSubtitle ?? 'KPFL Admin';
+
   return (
     <div className="min-h-screen bg-[#F4F6F8] text-[#0F1729]">
       <div className="flex min-h-screen">
@@ -62,8 +74,8 @@ export function AdminLayout({ activePath, children, onNavigate, onLogout }: Admi
           <header className="h-16 bg-white border-b border-[#E5E7EB] sticky top-0 z-20">
             <div className="h-full px-4 md:px-6 flex items-center justify-between">
               <div>
-                <p className="text-xs text-[#9CA3AF]">KPFL Admin</p>
-                <h1 className="text-lg font-black text-[#0F1729]">{getSectionTitle(activePath)}</h1>
+                <p className="text-xs text-[#9CA3AF]">{currentSubtitle}</p>
+                <h1 className="text-lg font-black text-[#0F1729]">{currentTitle}</h1>
               </div>
               <button
                 onClick={onLogout}

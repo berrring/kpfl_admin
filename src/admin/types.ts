@@ -114,3 +114,91 @@ export interface NewsPayload {
   clubId?: Identifier;
   playerId?: Identifier;
 }
+
+export interface FantasyLeagueItem {
+  leagueId: Identifier;
+  name: string;
+  code: string;
+  isPrivate: boolean;
+  seasonYear?: number | null;
+  ownerDisplayName?: string;
+  memberCount?: number | null;
+}
+
+export interface FantasyAdminTeamItem {
+  teamId: Identifier;
+  teamName: string;
+  ownerEmail?: string;
+  ownerDisplayName?: string;
+  seasonYear?: number | null;
+  totalPoints?: number | null;
+  currentBudget?: number | null;
+  activeSquadSize?: number | null;
+}
+
+export interface FantasyPlayerStatItem {
+  id: Identifier;
+  playerId: Identifier;
+  playerName: string;
+  matchId: Identifier;
+  seasonYear?: number | null;
+  roundNumber?: number | null;
+  minutesPlayed?: number | null;
+  goals?: number | null;
+  assists?: number | null;
+  cleanSheet: boolean;
+  goalsConceded?: number | null;
+  yellowCards?: number | null;
+  redCards?: number | null;
+  ownGoals?: number | null;
+  penaltiesSaved?: number | null;
+  penaltiesMissed?: number | null;
+  saves?: number | null;
+  started: boolean;
+  substitutedIn: boolean;
+  substitutedOut: boolean;
+}
+
+export interface FantasyPlayerStatPayload {
+  matchId: Identifier;
+  playerId: Identifier;
+  minutesPlayed?: number | null;
+  goals?: number | null;
+  assists?: number | null;
+  cleanSheet: boolean;
+  goalsConceded?: number | null;
+  yellowCards?: number | null;
+  redCards?: number | null;
+  ownGoals?: number | null;
+  penaltiesSaved?: number | null;
+  penaltiesMissed?: number | null;
+  saves?: number | null;
+  started: boolean;
+  substitutedIn: boolean;
+  substitutedOut: boolean;
+}
+
+export interface FantasyPriceItem {
+  playerId: Identifier;
+  playerName: string;
+  seasonYear?: number | null;
+  currentPrice?: number | null;
+  initialPrice?: number | null;
+  priceSource?: string;
+  lastUpdatedAt?: string;
+}
+
+export interface FantasyRoundInfoItem {
+  seasonYear?: number | null;
+  roundNumber?: number | null;
+  lockAt?: string;
+  locked: boolean;
+}
+
+export interface FantasyRoundRecalculationItem {
+  seasonYear?: number | null;
+  roundNumber?: number | null;
+  teamsProcessed?: number | null;
+  playerPointRows?: number | null;
+  scoredAt?: string;
+}

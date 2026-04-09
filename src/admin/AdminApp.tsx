@@ -4,6 +4,7 @@ import { AdminGuard } from '@/admin/components/AdminGuard';
 import { AdminLayout } from '@/admin/components/AdminLayout';
 import { ClubsAdminPage } from '@/admin/pages/ClubsAdminPage';
 import { AdminLoginPage } from '@/admin/pages/AdminLoginPage';
+import { FantasyAdminPage } from '@/admin/pages/FantasyAdminPage';
 import { MatchesAdminPage } from '@/admin/pages/MatchesAdminPage';
 import { NewsAdminPage } from '@/admin/pages/NewsAdminPage';
 import { PlayersAdminPage } from '@/admin/pages/PlayersAdminPage';
@@ -15,9 +16,10 @@ type AdminPath =
   | '/admin/clubs'
   | '/admin/players'
   | '/admin/matches'
-  | '/admin/news';
+  | '/admin/news'
+  | '/admin/fantasy';
 
-type ProtectedAdminPath = '/admin/clubs' | '/admin/players' | '/admin/matches' | '/admin/news';
+type ProtectedAdminPath = '/admin/clubs' | '/admin/players' | '/admin/matches' | '/admin/news' | '/admin/fantasy';
 
 const ROUTES: AdminPath[] = [
   '/admin',
@@ -26,6 +28,7 @@ const ROUTES: AdminPath[] = [
   '/admin/players',
   '/admin/matches',
   '/admin/news',
+  '/admin/fantasy',
 ];
 
 function normalizePath(pathname: string): string {
@@ -44,7 +47,8 @@ function isProtectedAdminPath(pathname: string): pathname is ProtectedAdminPath 
     pathname === '/admin/clubs' ||
     pathname === '/admin/players' ||
     pathname === '/admin/matches' ||
-    pathname === '/admin/news'
+    pathname === '/admin/news' ||
+    pathname === '/admin/fantasy'
   );
 }
 
@@ -58,6 +62,8 @@ function renderProtectedPage(path: ProtectedAdminPath) {
       return <MatchesAdminPage />;
     case '/admin/news':
       return <NewsAdminPage />;
+    case '/admin/fantasy':
+      return <FantasyAdminPage />;
     default:
       return null;
   }

@@ -1,6 +1,13 @@
 import type {
   ClubItem,
   ClubPayload,
+  FantasyAdminTeamItem,
+  FantasyLeagueItem,
+  FantasyPlayerStatItem,
+  FantasyPlayerStatPayload,
+  FantasyPriceItem,
+  FantasyRoundInfoItem,
+  FantasyRoundRecalculationItem,
   Identifier,
   MatchItem,
   MatchPayload,
@@ -27,6 +34,16 @@ const API_ENDPOINTS = {
   newsList: '/api/news',
   newsDetail: (id: Identifier) => `/api/news/${id}`,
   newsAdmin: '/admin/news',
+  fantasyLeaguesAdmin: '/admin/fantasy/leagues',
+  fantasyTeamsAdmin: '/admin/fantasy/teams',
+  fantasyMatchStatsAdmin: (matchId: Identifier) => `/admin/fantasy/player-stats/match/${matchId}`,
+  fantasyPlayerStatsAdmin: '/admin/fantasy/player-stats',
+  fantasyPlayerStatAdmin: (id: Identifier) => `/admin/fantasy/player-stats/${id}`,
+  fantasyPlayerPriceAdmin: (playerId: Identifier) => `/admin/fantasy/prices/player/${playerId}`,
+  fantasyPricesRebuildAdmin: '/admin/fantasy/prices/rebuild',
+  fantasyRoundRecalculateAdmin: (seasonId: Identifier, roundNumber: number) =>
+    `/admin/fantasy/recalculate/round/${seasonId}/${roundNumber}`,
+  fantasyCurrentRound: '/api/fantasy/rounds/current',
 } as const;
 const TOKEN_KEY = 'kpfl_admin_token';
 const DETAIL_REQUEST_CONCURRENCY = 12;
@@ -214,6 +231,99 @@ function normalizeNews(value: unknown): NewsItem {
     playerName: isRecord(playerValue)
       ? [readString(playerValue, ['firstName']), readString(playerValue, ['lastName'])].filter(Boolean).join(' ')
       : '',
+  };
+}
+
+function normalizeFantasyLeague(value: unknown): FantasyLeagueItem {
+  const row = isRecord(value) ? value : {};
+
+  return {
+    leagueId: readIdentifier(row, ['leagueId', 'id']),
+    name: readString(row, ['name']),
+    code: readString(row, ['code']),
+    isPrivate: Boolean(readValue(row, ['isPrivate', 'private'])),
+    seasonYear: readNumber(row, ['seasonYear', 'season_year']) ?? null,
+    ownerDisplayName: readString(row, ['ownerDisplayName', 'owner_display_name']),
+    memberCount: readNumber(row, ['memberCount', 'member_count']) ?? null,
+  };
+}
+
+function normalizeFantasyAdminTeam(value: unknown): FantasyAdminTeamItem {
+  const row = isRecord(value) ? value : {};
+
+  return {
+    teamId: readIdentifier(row, ['teamId', 'id']),
+    teamName: readString(row, ['teamName', 'name']),
+    ownerEmail: readString(row, ['ownerEmail', 'owner_email']),
+    ownerDisplayName: readString(row, ['ownerDisplayName', 'owner_display_name']),
+    seasonYear: readNumber(row, ['seasonYear', 'season_year']) ?? null,
+    totalPoints: readNumber(row, ['totalPoints', 'total_points']) ?? null,
+    currentBudget: readNumber(row, ['currentBudget', 'current_budget']) ?? null,
+    activeSquadSize: readNumber(row, ['activeSquadSize', 'active_squad_size']) ?? null,
+  };
+}
+
+function normalizeFantasyPlayerStat(value: unknown): FantasyPlayerStatItem {
+  const row = isRecord(value) ? value : {};
+
+  return {
+    id: readIdentifier(row, ['id']),
+    playerId: readIdentifier(row, ['playerId', 'player_id']),
+    playerName: readString(row, ['playerName', 'player_name']),
+    matchId: readIdentifier(row, ['matchId', 'match_id']),
+    seasonYear: readNumber(row, ['seasonYear', 'season_year']) ?? null,
+    roundNumber: readNumber(row, ['roundNumber', 'round_number']) ?? null,
+    minutesPlayed: readNumber(row, ['minutesPlayed', 'minutes_played']) ?? null,
+    goals: readNumber(row, ['goals']) ?? null,
+    assists: readNumber(row, ['assists']) ?? null,
+    cleanSheet: Boolean(readValue(row, ['cleanSheet', 'clean_sheet'])),
+    goalsConceded: readNumber(row, ['goalsConceded', 'goals_conceded']) ?? null,
+    yellowCards: readNumber(row, ['yellowCards', 'yellow_cards']) ?? null,
+    redCards: readNumber(row, ['redCards', 'red_cards']) ?? null,
+    ownGoals: readNumber(row, ['ownGoals', 'own_goals']) ?? null,
+    penaltiesSaved: readNumber(row, ['penaltiesSaved', 'penalties_saved']) ?? null,
+    penaltiesMissed: readNumber(row, ['penaltiesMissed', 'penalties_missed']) ?? null,
+    saves: readNumber(row, ['saves']) ?? null,
+    started: Boolean(readValue(row, ['started'])),
+    substitutedIn: Boolean(readValue(row, ['substitutedIn', 'substituted_in'])),
+    substitutedOut: Boolean(readValue(row, ['substitutedOut', 'substituted_out'])),
+  };
+}
+
+function normalizeFantasyPrice(value: unknown): FantasyPriceItem {
+  const row = isRecord(value) ? value : {};
+
+  return {
+    playerId: readIdentifier(row, ['playerId', 'player_id']),
+    playerName: readString(row, ['playerName', 'player_name']),
+    seasonYear: readNumber(row, ['seasonYear', 'season_year']) ?? null,
+    currentPrice: readNumber(row, ['currentPrice', 'current_price']) ?? null,
+    initialPrice: readNumber(row, ['initialPrice', 'initial_price']) ?? null,
+    priceSource: readString(row, ['priceSource', 'price_source']),
+    lastUpdatedAt: readString(row, ['lastUpdatedAt', 'last_updated_at']),
+  };
+}
+
+function normalizeFantasyRoundInfo(value: unknown): FantasyRoundInfoItem {
+  const row = isRecord(value) ? value : {};
+
+  return {
+    seasonYear: readNumber(row, ['seasonYear', 'season_year']) ?? null,
+    roundNumber: readNumber(row, ['roundNumber', 'round_number']) ?? null,
+    lockAt: readString(row, ['lockAt', 'lock_at']),
+    locked: Boolean(readValue(row, ['locked'])),
+  };
+}
+
+function normalizeFantasyRoundRecalculation(value: unknown): FantasyRoundRecalculationItem {
+  const row = isRecord(value) ? value : {};
+
+  return {
+    seasonYear: readNumber(row, ['seasonYear', 'season_year']) ?? null,
+    roundNumber: readNumber(row, ['roundNumber', 'round_number']) ?? null,
+    teamsProcessed: readNumber(row, ['teamsProcessed', 'teams_processed']) ?? null,
+    playerPointRows: readNumber(row, ['playerPointRows', 'player_point_rows']) ?? null,
+    scoredAt: readString(row, ['scoredAt', 'scored_at']),
   };
 }
 
@@ -439,6 +549,10 @@ export async function fetchMatches(): Promise<MatchItem[]> {
   );
 }
 
+export async function fetchMatchesBasic(): Promise<MatchItem[]> {
+  return requestList(API_ENDPOINTS.matchesList, normalizeMatch);
+}
+
 export async function fetchPlayersBasic(): Promise<PlayerItem[]> {
   return requestList(API_ENDPOINTS.playersList, normalizePlayer);
 }
@@ -450,6 +564,30 @@ export async function fetchNews(limit: number = 50): Promise<NewsItem[]> {
     API_ENDPOINTS.newsDetail,
     normalizeNews,
   );
+}
+
+export async function fetchFantasyLeagues(): Promise<FantasyLeagueItem[]> {
+  return requestList(API_ENDPOINTS.fantasyLeaguesAdmin, normalizeFantasyLeague);
+}
+
+export async function fetchFantasyTeams(): Promise<FantasyAdminTeamItem[]> {
+  return requestList(API_ENDPOINTS.fantasyTeamsAdmin, normalizeFantasyAdminTeam);
+}
+
+export async function fetchFantasyMatchStats(matchId: Identifier): Promise<FantasyPlayerStatItem[]> {
+  return requestList(API_ENDPOINTS.fantasyMatchStatsAdmin(matchId), normalizeFantasyPlayerStat);
+}
+
+export async function fetchFantasyCurrentRound(): Promise<FantasyRoundInfoItem | null> {
+  try {
+    const payload = await apiRequest<unknown>(API_ENDPOINTS.fantasyCurrentRound, { method: 'GET', auth: false });
+    return normalizeFantasyRoundInfo(payload);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function createClub(payload: ClubPayload): Promise<void> {
@@ -613,4 +751,88 @@ export async function updateNews(id: Identifier, payload: NewsPayload): Promise<
     method: 'PUT',
     body: requestBody,
   });
+}
+
+export async function createFantasyPlayerStat(payload: FantasyPlayerStatPayload): Promise<FantasyPlayerStatItem> {
+  const requestBody = withoutUndefined({
+    matchId: asPayloadId(payload.matchId),
+    playerId: asPayloadId(payload.playerId),
+    minutesPlayed: payload.minutesPlayed ?? undefined,
+    goals: payload.goals ?? undefined,
+    assists: payload.assists ?? undefined,
+    cleanSheet: payload.cleanSheet,
+    goalsConceded: payload.goalsConceded ?? undefined,
+    yellowCards: payload.yellowCards ?? undefined,
+    redCards: payload.redCards ?? undefined,
+    ownGoals: payload.ownGoals ?? undefined,
+    penaltiesSaved: payload.penaltiesSaved ?? undefined,
+    penaltiesMissed: payload.penaltiesMissed ?? undefined,
+    saves: payload.saves ?? undefined,
+    started: payload.started,
+    substitutedIn: payload.substitutedIn,
+    substitutedOut: payload.substitutedOut,
+  });
+
+  const response = await apiRequest<unknown>(API_ENDPOINTS.fantasyPlayerStatsAdmin, {
+    method: 'POST',
+    body: requestBody,
+  });
+
+  return normalizeFantasyPlayerStat(response);
+}
+
+export async function updateFantasyPlayerStat(
+  id: Identifier,
+  payload: FantasyPlayerStatPayload,
+): Promise<FantasyPlayerStatItem> {
+  const requestBody = withoutUndefined({
+    matchId: asPayloadId(payload.matchId),
+    playerId: asPayloadId(payload.playerId),
+    minutesPlayed: payload.minutesPlayed ?? undefined,
+    goals: payload.goals ?? undefined,
+    assists: payload.assists ?? undefined,
+    cleanSheet: payload.cleanSheet,
+    goalsConceded: payload.goalsConceded ?? undefined,
+    yellowCards: payload.yellowCards ?? undefined,
+    redCards: payload.redCards ?? undefined,
+    ownGoals: payload.ownGoals ?? undefined,
+    penaltiesSaved: payload.penaltiesSaved ?? undefined,
+    penaltiesMissed: payload.penaltiesMissed ?? undefined,
+    saves: payload.saves ?? undefined,
+    started: payload.started,
+    substitutedIn: payload.substitutedIn,
+    substitutedOut: payload.substitutedOut,
+  });
+
+  const response = await apiRequest<unknown>(API_ENDPOINTS.fantasyPlayerStatAdmin(id), {
+    method: 'PUT',
+    body: requestBody,
+  });
+
+  return normalizeFantasyPlayerStat(response);
+}
+
+export async function rebuildFantasyPriceForPlayer(playerId: Identifier): Promise<FantasyPriceItem> {
+  const response = await apiRequest<unknown>(API_ENDPOINTS.fantasyPlayerPriceAdmin(playerId), {
+    method: 'POST',
+  });
+  return normalizeFantasyPrice(response);
+}
+
+export async function rebuildFantasyPrices(): Promise<FantasyPriceItem[]> {
+  const payload = await apiRequest<unknown>(API_ENDPOINTS.fantasyPricesRebuildAdmin, {
+    method: 'POST',
+  });
+  const list = listFromPayload(payload);
+  return list.map(normalizeFantasyPrice);
+}
+
+export async function recalculateFantasyRound(
+  seasonId: Identifier,
+  roundNumber: number,
+): Promise<FantasyRoundRecalculationItem> {
+  const response = await apiRequest<unknown>(API_ENDPOINTS.fantasyRoundRecalculateAdmin(seasonId, roundNumber), {
+    method: 'POST',
+  });
+  return normalizeFantasyRoundRecalculation(response);
 }

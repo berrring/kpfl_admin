@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { cn } from '@/utils/cn';
 
 export interface AdminNavItem {
-  path: '/admin/clubs' | '/admin/players' | '/admin/matches' | '/admin/news';
+  path: '/admin/clubs' | '/admin/players' | '/admin/matches' | '/admin/news' | '/admin/fantasy';
   label: string;
 }
 
@@ -11,6 +11,7 @@ const NAV_ITEMS: AdminNavItem[] = [
   { path: '/admin/players', label: 'Players' },
   { path: '/admin/matches', label: 'Matches' },
   { path: '/admin/news', label: 'News' },
+  { path: '/admin/fantasy', label: 'Fantasy' },
 ];
 
 interface AdminLayoutProps {
